@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة التداول الذكية - Trading Platform</title>
+    
+    <!-- Chart.js لرسم الرسوم البيانية -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0D1117;
+            --bg-secondary: #161B22;
+            --text-primary: #E6EDF3;
+            --text-secondary: #8B949E;
+            --primary: #2F81F7;
+            --success: #2EA043;
+            --danger: #F85149;
+            --warning: #D29922;
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        html[lang="en"] {
+            direction: ltr;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            padding: 20px;
+            overflow-y: auto;
+            position: fixed;
+            right: 0;
+            top: 0;
+            height: 100vh;
+            z-index: 1000;
+        }
+
+        html[lang="en"] .sidebar {
+            right: auto;
+            left: 0;
+            border-left: none;
+            border-right: 1px solid var(--border);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo::before {
+            content: "📊";
+            font-size: 28px;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 10px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(47, 129, 247, 0.1);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .nav-link.active {
+            background-color: rgba(47, 129, 247, 0.2);
+            color: var(--primary);
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .nav-link::before {
+            font-size: 20px;
+            display: inline-block;
+        }
+
+        .nav-item:nth-child(1) .nav-link::before { content: "📈"; }
+        .nav-item:nth-child(2) .nav-link::before { content: "💱"; }
+        .nav-item:nth-child(3) .nav-link::before { content: "⏱️"; }
+        .nav-item:nth-child(4) .nav-link::before { content: "🏫"; }
+        .nav-item:nth-child(5) .nav-link::before { content: "📊"; }
+        .nav-item:nth-child(6) .nav-link::before { content: "📉"; }
+        .nav-item:nth-child(7) .nav-link::before { content: "🚫"; }
+        .nav-item:nth-child(8) .nav-link::before { content: "⚙️"; }
+        .nav-item:nth-child(9) .nav-link::before { content: "🤖"; }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-right: 250px;
+            padding: 30px;
+            overflow-y: auto;
+            height: 100vh;
+        }
+
+        html[lang="en"] .main-content {
+            margin-right: 0;
+            margin-left: 250px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-left h1 {
+            font-size: 32px;
+            margin-bottom: 5px;
+        }
+
+        .header-left p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(47, 129, 247, 0.1);
+            border-color: var(--primary);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        }
+
+        .grid-4 {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+
+        /* Card */
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 24px rgba(47, 129, 247, 0.1);
+            transform: translateY(-4px);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .card-positive {
+            color: var(--success);
+        }
+
+        .card-negative {
+            color: var(--danger);
+        }
+
+        /* Table */
+        .table-container {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: rgba(47, 129, 247, 0.1);
+            padding: 15px;
+            text-align: right;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+            color: var(--primary);
+        }
+
+        html[lang="en"] th {
+            text-align: left;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:hover {
+            background-color: rgba(47, 129, 247, 0.05);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background-color: rgba(46, 160, 67, 0.2);
+            color: var(--success);
+        }
+
+        .badge-danger {
+            background-color: rgba(248, 81, 73, 0.2);
+            color: var(--danger);
+        }
+
+        .badge-warning {
+            background-color: rgba(210, 153, 34, 0.2);
+            color: var(--warning);
+        }
+
+        .badge-primary {
+            background-color: rgba(47, 129, 247, 0.2);
+            color: var(--primary);
+        }
+
+        /* Chart Container */
+        .chart-container {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            height: 400px;
+        }
+
+        .chart-container canvas {
+            max-height: 350px;
+        }
+
+        /* Loading */
+        .spinner {
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Page */
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .lang-switcher {
+            display: flex;
+            gap: 5px;
+        }
+
+        .lang-btn {
+            padding: 8px 12px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .lang-btn:hover {
+            border-color: var(--primary);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .price-update {
+            animation: pulse 1s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 15px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(47, 129, 247, 0.1);
+        }
+
+        .chat-container {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background-color: rgba(47, 129, 247, 0.2);
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            background-color: var(--bg-primary);
+            padding: 12px 16px;
+            border-radius: 8px;
+            max-width: 70%;
+            word-break: break-word;
+        }
+
+        .message-user .message-content {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 10px;
+            padding: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .chat-input input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .chat-input button {
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-left: none;
+                border-bottom: 1px solid var(--border);
+                padding: 15px;
+            }
+
+            html[lang="en"] .sidebar {
+                border-right: none;
+            }
+
+            .main-content {
+                margin-right: 0;
+                margin-top: 60px;
+                padding: 15px;
+            }
+
+            html[lang="en"] .main-content {
+                margin-left: 0;
+            }
+
+            .nav-menu {
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .nav-item {
+                margin-bottom: 0;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">Trading Pro</div>
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a class="nav-link active" onclick="switchPage('dashboard')" data-page="dashboard">
+                            <span data-i18n="dashboard">لوحة التحكم</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchPage('markets')" data-page="markets">
+                            <span data-i18n="markets">الأسواق</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchPage('timeframes')" data-page="timeframes">
+                            <span data-i18n="timeframes">الأطر الزمنية</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchPage('schools')" data-page="schools">
+                            <span data-i18n="schools">المدارس</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchPage('trades')" data-page="trades">
+                            <span data-i18n="trades">التداولات</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchPage('statistics')" data-page="statistics">
+                            <span data-i18n="statistics">الإحصائيات</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchPage('backlist')" data-page="backlist">
+                            <span data-i18n="backlist">القائمة السوداء</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchPage('settings')" data-page="settings">
+                            <span data-i18n="settings">الإعدادات</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" onclick="switchPage('ai-assistant')" data-page="ai-assistant">
+                            <span data-i18n="aiAssistant">المساعد الذكي</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-left">
+                    <h1 data-i18n="dashboard">لوحة التحكم</h1>
+                    <p id="timeDisplay"></p>
+                </div>
+                <div class="header-right">
+                    <div class="lang-switcher">
+                        <button class="lang-btn active" onclick="switchLanguage('ar')">العربية</button>
+                        <button class="lang-btn" onclick="switchLanguage('en')">English</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Page -->
+            <div id="dashboard" class="page active">
+                <div class="grid">
+                    <div class="card">
+                        <div class="card-title" data-i18n="winRate">نسبة الفوز</div>
+                        <div class="card-value card-positive">65.5%</div>
+                        <div class="card-subtitle">من 200 تداول</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title" data-i18n="profitFactor">عامل الربح</div>
+                        <div class="card-value card-positive">2.85</div>
+                        <div class="card-subtitle">إجمالي الأرباح / الخسائر</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title" data-i18n="activeSignals">الإشارات النشطة</div>
+                        <div class="card-value">12</div>
+                        <div class="card-subtitle">إشارات جاهزة للتنفيذ</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">إجمالي الأرباح</div>
+                        <div class="card-value card-positive">+$5,420</div>
+                        <div class="card-subtitle">هذا الشهر</div>
+                    </div>
+                </div>
+
+                <div class="grid">
+                    <div class="card" style="grid-column: 1 / -1;">
+                        <div class="card-title">الأسعار المباشرة</div>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>الرمز</th>
+                                        <th>السعر الحالي</th>
+                                        <th>التغيير 24h</th>
+                                        <th>أعلى</th>
+                                        <th>أقل</th>
+                                        <th>الرسم البياني</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pricesTable">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center;">جاري تحميل البيانات...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Markets Page -->
+            <div id="markets" class="page">
+                <div style="margin-bottom: 20px;">
+                    <label for="marketSelect" style="margin-right: 10px; font-weight: 600;">اختر السوق:</label>
+                    <select id="marketSelect" onchange="updateChart()" style="width: auto; display: inline-block; min-width: 150px;">
+                        <option value="BTC">Bitcoin (BTC/USD)</option>
+                        <option value="ETH">Ethereum (ETH/USD)</option>
+                        <option value="XAU">Gold (XAU/USD)</option>
+                        <option value="EUR">Euro (EUR/USD)</option>
+                    </select>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+
+                <div class="grid grid-2">
+                    <div class="card">
+                        <div class="card-title" id="marketName">Bitcoin (BTC/USD)</div>
+                        <div class="card-value" id="marketPrice">$0.00</div>
+                        <div class="card-subtitle" id="marketChange">التغيير</div>
+                        <div class="stat-row">
+                            <span class="stat-label">أعلى 24h:</span>
+                            <span class="stat-value" id="market24hHigh">-</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">أقل 24h:</span>
+                            <span class="stat-value" id="market24hLow">-</span>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">تحليل المدارس</div>
+                        <div class="stat-row">
+                            <span class="stat-label">SMC:</span>
+                            <span class="stat-value card-positive">شراء قوي</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">ICT:</span>
+                            <span class="stat-value card-positive">شراء</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">Price Action:</span>
+                            <span class="stat-value">محايد</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">الثقة العامة:</span>
+                            <span class="stat-value card-positive">قوية</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timeframes Page -->
+            <div id="timeframes" class="page">
+                <div class="grid grid-3">
+                    <div class="card">
+                        <div class="card-title">M1</div>
+                        <div class="card-value">صاعد</div>
+                        <div class="card-subtitle">قوة الاتجاه: قوي</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">M5</div>
+                        <div class="card-value">صاعد</div>
+                        <div class="card-subtitle">قوة الاتجاه: متوسط</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">M15</div>
+                        <div class="card-value">محايد</div>
+                        <div class="card-subtitle">قوة الاتجاه: ضعيف</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">H1</div>
+                        <div class="card-value">صاعد</div>
+                        <div class="card-subtitle">قوة الاتجاه: قوي</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">H4</div>
+                        <div class="card-value">صاعد</div>
+                        <div class="card-subtitle">قوة الاتجاه: متوسط</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">D1</div>
+                        <div class="card-value">صاعد</div>
+                        <div class="card-subtitle">قوة الاتجاه: متوسط</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schools Page -->
+            <div id="schools" class="page">
+                <div class="grid">
+                    <div class="card">
+                        <div class="card-title">SMC</div>
+                        <div class="card-value">72.5%</div>
+                        <div class="card-subtitle">معدل الفوز</div>
+                        <div class="stat-row">
+                            <span class="stat-label">عدد التداولات:</span>
+                            <span class="stat-value">45</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">الربح الإجمالي:</span>
+                            <span class="stat-value card-positive">$2,100</span>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">ICT</div>
+                        <div class="card-value">68.5%</div>
+                        <div class="card-subtitle">معدل الفوز</div>
+                        <div class="stat-row">
+                            <span class="stat-label">عدد التداولات:</span>
+                            <span class="stat-value">38</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">الربح الإجمالي:</span>
+                            <span class="stat-value card-positive">$1,850</span>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">VSA</div>
+                        <div class="card-value">65.0%</div>
+                        <div class="card-subtitle">معدل الفوز</div>
+                        <div class="stat-row">
+                            <span class="stat-label">عدد التداولات:</span>
+                            <span class="stat-value">52</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">الربح الإجمالي:</span>
+                            <span class="stat-value card-positive">$1,570</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trades Page -->
+            <div id="trades" class="page">
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="showModal('addTradeModal')">+ إضافة تداول</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">التداولات المغلقة</div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الرمز</th>
+                                    <th>الاتجاه</th>
+                                    <th>نقطة الدخول</th>
+                                    <th>الإغلاق</th>
+                                    <th>الربح/الخسارة</th>
+                                    <th>النسبة %</th>
+                                    <th>التاريخ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>BTCUSD</strong></td>
+                                    <td><span class="badge badge-success">شراء</span></td>
+                                    <td>41,200</td>
+                                    <td>42,500</td>
+                                    <td class="card-positive">+$1,300</td>
+                                    <td class="card-positive">+3.16%</td>
+                                    <td>2026-05-05</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>XAUUSD</strong></td>
+                                    <td><span class="badge badge-danger">بيع</span></td>
+                                    <td>1,995</td>
+                                    <td>1,975</td>
+                                    <td class="card-positive">+$200</td>
+                                    <td class="card-positive">+1.00%</td>
+                                    <td>2026-05-04</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Page -->
+            <div id="statistics" class="page">
+                <div class="grid">
+                    <div class="card" style="grid-column: 1 / -1;">
+                        <div class="card-title">إحصائيات شاملة</div>
+                        <div class="stat-row">
+                            <span class="stat-label">إجمالي التداولات</span>
+                            <span class="stat-value">200</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">نسبة الفوز</span>
+                            <span class="stat-value card-positive">65.5%</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">عامل الربح</span>
+                            <span class="stat-value card-positive">2.85</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">متوسط R:R</span>
+                            <span class="stat-value">1.8</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">أفضل يوم</span>
+                            <span class="stat-value">الثلاثاء</span>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-label">أفضل ساعة</span>
+                            <span class="stat-value">14:00 - 15:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backlist Page -->
+            <div id="backlist" class="page">
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="showModal('addToBacklist')">+ إضافة إلى القائمة السوداء</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">الرموز المحظورة</div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الرمز</th>
+                                    <th>السبب</th>
+                                    <th>التاريخ</th>
+                                    <th>الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>NZDUSD</strong></td>
+                                    <td>تقلبات عالية</td>
+                                    <td>2026-04-15</td>
+                                    <td><button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;">إزالة</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Page -->
+            <div id="settings" class="page">
+                <div class="card">
+                    <div class="card-title">الإعدادات</div>
+                    
+                    <div class="input-group">
+                        <label>المخاطر كنسبة مئوية من الحساب</label>
+                        <input type="number" value="2" min="0.1" max="10" step="0.1">
+                    </div>
+
+                    <div class="input-group">
+                        <label>الحد الأدنى لمستوى الثقة</label>
+                        <select>
+                            <option>جميع المستويات</option>
+                            <option>متوسط وقوي فقط</option>
+                            <option>قوي فقط</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-primary" onclick="alert('تم حفظ الإعدادات')">💾 حفظ الإعدادات</button>
+                </div>
+            </div>
+
+            <!-- AI Assistant Page -->
+            <div id="ai-assistant" class="page">
+                <div class="card">
+                    <div class="card-title">المساعد الذكي</div>
+                    <div class="chat-container">
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message">
+                                <div class="message-avatar">🤖</div>
+                                <div class="message-content">
+                                    مرحباً! أنا مساعدك الذكي. يمكنك سؤالي عن الأسعار والتحليل والإشارات
+                                </div>
+                            </div>
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" id="chatInput" placeholder="اكتب سؤالك..." onkeypress="handleChatInput(event)">
+                            <button class="btn btn-primary" onclick="sendChatMessage()">📤</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Trade Modal -->
+    <div id="addTradeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>إضافة تداول جديد</h2>
+                <button class="close-btn" onclick="closeModal('addTradeModal')">&times;</button>
+            </div>
+            <div class="input-group">
+                <label>الرمز</label>
+                <select>
+                    <option>BTCUSD</option>
+                    <option>ETHUSD</option>
+                    <option>XAUUSD</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>الاتجاه</label>
+                <select>
+                    <option>شراء</option>
+                    <option>بيع</option>
+                </select>
+            </div>
+            <button class="btn btn-success" onclick="closeModal('addTradeModal')" style="width: 100%; margin-bottom: 10px;">✓ إضافة</button>
+            <button class="btn btn-secondary" onclick="closeModal('addTradeModal')" style="width: 100%;">إلغاء</button>
+        </div>
+    </div>
+
+    <div id="addToBacklist" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>إضافة إلى القائمة السوداء</h2>
+                <button class="close-btn" onclick="closeModal('addToBacklist')">&times;</button>
+            </div>
+            <div class="input-group">
+                <label>الرمز</label>
+                <select>
+                    <option>BTCUSD</option>
+                    <option>ETHUSD</option>
+                    <option>XAUUSD</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>السبب</label>
+                <textarea rows="3" placeholder="اكتب السبب..."></textarea>
+            </div>
+            <button class="btn btn-success" onclick="closeModal('addToBacklist')" style="width: 100%; margin-bottom: 10px;">✓ إضافة</button>
+            <button class="btn btn-secondary" onclick="closeModal('addToBacklist')" style="width: 100%;">إلغاء</button>
+        </div>
+    </div>
+
+    <script>
+        // الترجمات
+        const translations = {
+            ar: {
+                dashboard: 'لوحة التحكم',
+                markets: 'الأسواق',
+                timeframes: 'الأطر الزمنية',
+                schools: 'المدارس',
+                trades: 'التداولات',
+                statistics: 'الإحصائيات',
+                backlist: 'القائمة السوداء',
+                settings: 'الإعدادات',
+                aiAssistant: 'المساعد الذكي',
+                winRate: 'نسبة الفوز',
+                profitFactor: 'عامل الربح',
+                activeSignals: 'الإشارات النشطة'
+            },
+            en: {
+                dashboard: 'Dashboard',
+                markets: 'Markets',
+                timeframes: 'Timeframes',
+                schools: 'Schools',
+                trades: 'Trades',
+                statistics: 'Statistics',
+                backlist: 'Backlist',
+                settings: 'Settings',
+                aiAssistant: 'AI Assistant',
+                winRate: 'Win Rate',
+                profitFactor: 'Profit Factor',
+                activeSignals: 'Active Signals'
+            }
+        };
+
+        let currentLanguage = 'ar';
+        let chartInstance = null;
+        let pricesData = {};
+
+        // بيانات الأسعار الحقيقية - محاكاة
+        const mockPrices = {
+            BTC: { name: 'Bitcoin (BTC/USD)', price: 42850, change: 2.5, high: 43200, low: 41500 },
+            ETH: { name: 'Ethereum (ETH/USD)', price: 2280, change: 1.8, high: 2350, low: 2200 },
+            XAU: { name: 'Gold (XAU/USD)', price: 1982, change: -1.2, high: 2010, low: 1970 },
+            EUR: { name: 'Euro (EUR/USD)', price: 1.0875, change: 0.8, high: 1.0920, low: 1.0800 }
+        };
+
+        // توليد بيانات الرسم البياني
+        function generateChartData(symbol) {
+            const basePrice = mockPrices[symbol].price;
+            const labels = [];
+            const data = [];
+
+            for (let i = 30; i >= 0; i--) {
+                const date = new Date();
+                date.setHours(date.getHours() - i);
+                labels.push(date.getHours() + ':00');
+                
+                // محاكاة تحرك السعر
+                const variation = (Math.random() - 0.5) * 200;
+                data.push(basePrice + variation);
+            }
+
+            return { labels, data };
+        }
+
+        // تحديث الرسم البياني
+        function updateChart() {
+            const symbol = document.getElementById('marketSelect').value;
+            const market = mockPrices[symbol];
+            const chartData = generateChartData(symbol);
+
+            // تحديث معلومات السوق
+            document.getElementById('marketName').textContent = market.name;
+            document.getElementById('marketPrice').textContent = '$' + market.price.toFixed(2);
+            document.getElementById('marketChange').textContent = (market.change > 0 ? '↑' : '↓') + ' ' + market.change + '%';
+            document.getElementById('marketChange').className = 'card-subtitle ' + (market.change > 0 ? 'card-positive' : 'card-negative');
+            document.getElementById('market24hHigh').textContent = '$' + market.high.toFixed(2);
+            document.getElementById('market24hLow').textContent = '$' + market.low.toFixed(2);
+
+            // حذف الرسم البياني القديم
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            // إنشاء رسم بياني جديد
+            const ctx = document.getElementById('priceChart');
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: market.name,
+                        data: chartData.data,
+                        borderColor: market.change > 0 ? '#2EA043' : '#F85149',
+                        backgroundColor: market.change > 0 ? 'rgba(46, 160, 67, 0.1)' : 'rgba(248, 81, 73, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#E6EDF3' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: { color: '#8B949E' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        x: {
+                            ticks: { color: '#8B949E' },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // تحديث جدول الأسعار
+        function updatePricesTable() {
+            const tbody = document.getElementById('pricesTable');
+            tbody.innerHTML = '';
+
+            for (const [symbol, data] of Object.entries(mockPrices)) {
+                const row = document.createElement('tr');
+                const changeColor = data.change > 0 ? 'card-positive' : 'card-negative';
+                const changeSymbol = data.change > 0 ? '↑' : '↓';
+
+                row.innerHTML = `
+                    <td><strong>${symbol}USD</strong></td>
+                    <td class="price-update">$${data.price.toFixed(2)}</td>
+                    <td class="${changeColor}">${changeSymbol} ${data.change}%</td>
+                    <td>$${data.high.toFixed(2)}</td>
+                    <td>$${data.low.toFixed(2)}</td>
+                    <td><button class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="document.getElementById('marketSelect').value = '${symbol}'; updateChart()">عرض</button></td>
+                `;
+                tbody.appendChild(row);
+            }
+        }
+
+        // تبديل الصفحة
+        function switchPage(pageName) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+
+            document.getElementById(pageName).classList.add('active');
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`[data-page="${pageName}"]`).classList.add('active');
+
+            const title = document.querySelector(`[data-page="${pageName}"] span`).textContent;
+            document.querySelector('.header-left h1').textContent = title;
+
+            // تحديث الرسم البياني عند الانتقال للصفحة
+            if (pageName === 'markets') {
+                setTimeout(updateChart, 100);
+            }
+        }
+
+        // تبديل اللغة
+        function switchLanguage(lang) {
+            currentLanguage = lang;
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                element.textContent = translations[lang][key] || key;
+            });
+
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // إظهار Modal
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+
+        // إغلاق Modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        // إغلاق Modal عند النقر خارجه
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
+            });
+        });
+
+        // المساعد الذكي
+        function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            addChatMessage(message, 'user');
+
+            setTimeout(() => {
+                const response = generateAIResponse(message);
+                addChatMessage(response, 'ai');
+            }, 500);
+
+            input.value = '';
+        }
+
+        function addChatMessage(text, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender === 'user' ? 'message-user' : ''}`;
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${sender === 'user' ? '👤' : '🤖'}</div>
+                <div class="message-content">${text}</div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function generateAIResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            const btcPrice = mockPrices.BTC.price;
+            const ethPrice = mockPrices.ETH.price;
+            const xauPrice = mockPrices.XAU.price;
+
+            if (lowerMessage.includes('btc') || lowerMessage.includes('bitcoin')) {
+                return `Bitcoin حالياً عند $${btcPrice}. التغيير ${mockPrices.BTC.change}% في آخر 24 ساعة. الاتجاه صاعد مع مقاومة عند $${mockPrices.BTC.high}`;
+            }
+            if (lowerMessage.includes('eth') || lowerMessage.includes('ethereum')) {
+                return `Ethereum حالياً عند $${ethPrice}. التغيير ${mockPrices.ETH.change}% في آخر 24 ساعة. يتحرك صعوداً بقوة`;
+            }
+            if (lowerMessage.includes('xau') || lowerMessage.includes('gold')) {
+                return `الذهب حالياً عند $${xauPrice}. التغيير ${mockPrices.XAU.change}% في آخر 24 ساعة. يواجه مقاومة قوية`;
+            }
+            if (lowerMessage.includes('سعر')) {
+                return `الأسعار الحالية:\nBTC: $${btcPrice}\nETH: $${ethPrice}\nGold: $${xauPrice}`;
+            }
+
+            return 'يمكنك السؤال عن الأسعار الحالية أو التحليلات. مثلاً: "ما سعر Bitcoin؟"';
+        }
+
+        function handleChatInput(event) {
+            if (event.key === 'Enter') {
+                sendChatMessage();
+            }
+        }
+
+        // تحديث الوقت
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString(currentLanguage === 'ar' ? 'ar-EG' : 'en-US');
+            document.getElementById('timeDisplay').textContent = timeString;
+        }
+
+        // تحديث الأسعار كل 5 ثوان
+        setInterval(() => {
+            // محاكاة تغيير الأسعار
+            for (const symbol in mockPrices) {
+                mockPrices[symbol].price += (Math.random() - 0.5) * 10;
+                mockPrices[symbol].change += (Math.random() - 0.5) * 0.1;
+            }
+            updatePricesTable();
+        }, 5000);
+
+        // تهيئة الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            switchLanguage('ar');
+            updatePricesTable();
+            updateChart();
+            setInterval(updateTime, 1000);
+            updateTime();
+        });
+    </script>
+</body>
+</html>
